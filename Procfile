@@ -1,1 +1,1 @@
-web: bin/service
+web: bin/rcp
