@@ -39,7 +39,7 @@ func main() {
 	router.HandleFunc("/v", Erase).Methods(http.MethodDelete)
 	log.Println("Service started")
 
-	log.Fatal(http.ListenAndServe(os.Getenv("WS_PORT"), router))
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("WS_PORT"), router))
 }
 
 func rclientNew() (*redis.Client, error) {
