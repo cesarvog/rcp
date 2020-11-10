@@ -43,15 +43,9 @@ func main() {
 }
 
 func rclientNew() (*redis.Client, error) {
-	addr := os.Getenv("REDIS_ADDR")
-	pass := os.Getenv("REDIS_PASS")
-	//db := os.Getenv("REDIS_DB")
-
-	rdb := redis.NewClient(&redis.Options{
-		Addr: addr,
-		Password: pass,
-		DB: 0,
-	})
+	url := os.Getenv("REDIS_URL")
+	opt, _ := redis.ParseURL(url)
+	rdb := redis.NewClient(opt)
 
 	err := pingRedis(rdb)
 
