@@ -6,6 +6,7 @@ import (
 	"os/user"
 	"io/ioutil"
 	"bufio"
+	"text/scanner"
 	"path/filepath"
 	"strings"
 	"errors"
@@ -36,7 +37,7 @@ examples:
 host <host>
 `
 
-	DefaultHost = "https://rcp-cv.herokuapp.com"
+	DefaultHost = "https://rcp-cv.herokuapp.com/v"
 	ConfigFileName = ".rcp.properties"
 )
 
@@ -51,6 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	//rcp --configure <secret> <host>
 	if os.Args[1] == "--configure" {
 		if len(os.Args) < 3 {
 			fmt.Println(Help)
@@ -94,12 +96,15 @@ func getText() string {
 	fileInfo, _ := os.Stdin.Stat()
 	isPipe := fileInfo.Mode() & os.ModeCharDevice == 0
 	if isPipe {
-		txt := ""
-		scanner := bufio.NewScanner(bufio.NewReader(os.Stdin))
-		for scanner.Scan() {
-			txt = txt + scanner.Text()
+		var txt strings.Builder
+		txt.Grow(32)
+
+		var s scanner.Scanner
+		s.Init(bufio.NewReader(os.Stdin))
+		for b := s.Next(); b != scanner.EOF; b = s.Next() {
+			fmt.Fprintf(&txt, "%s", string(b))
 		}
-		return txt
+		return txt.String()
 	} else {
 		return strings.Join(os.Args[2:], " ")
 	}
@@ -203,11 +208,11 @@ func configure(secret, host string) error {
 }
 
 func backupFile(path string) {
-	 //Read all the contents of the  original file
-    bytesRead, _ := ioutil.ReadFile(path)
+	//Read all the contents of the  original file
+	bytesRead, _ := ioutil.ReadFile(path)
 
-    //Copy all the contents to the desitination file
-    ioutil.WriteFile(path+".backup", bytesRead, 0755)
+	//Copy all the contents to the desitination file
+	ioutil.WriteFile(path+".backup", bytesRead, 0755)
 }
 
 func fileExists(name string) bool {

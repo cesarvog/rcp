@@ -26,7 +26,7 @@ func (c *RcpRestClient) DoPut(txt string) error {
 }
 
 func (c *RcpRestClient) DoGet() (string, error) {
-	req, err := http.NewRequest("GET", c.Conf.Host + "/v", nil) 
+	req, err := http.NewRequest("GET", c.Conf.Host, nil) 
 	if err != nil {
 		return "", err
 	}
@@ -35,7 +35,7 @@ func (c *RcpRestClient) DoGet() (string, error) {
 }
 
 func (c *RcpRestClient) DoDelete() error {
-	req, err := http.NewRequest("DELETE", c.Conf.Host + "/v", nil) 
+	req, err := http.NewRequest("DELETE", c.Conf.Host, nil) 
 	if err != nil {
 		return err
 	}
