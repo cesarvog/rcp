@@ -78,6 +78,7 @@ func Copy(w http.ResponseWriter, r *http.Request) {
 
 	err = rclient.Set(ctx, auth, content, time.Hour).Err()
 	if err != nil {
+		log.Print(err)
 		http.Error(w, ErrorMessage, http.StatusInternalServerError)
 	}
 }
@@ -91,6 +92,7 @@ func Paste(w http.ResponseWriter, r *http.Request) {
 
 	val, err := rclient.Get(ctx, auth).Result()
 	if err != nil {
+		log.Print(err)
 		http.Error(w, ErrorMessage, http.StatusNotFound)
 		return
 	}
@@ -107,6 +109,7 @@ func Erase(w http.ResponseWriter, r *http.Request) {
 
 	err = rclient.Set(ctx, auth, "", time.Second).Err()
 	if err != nil {
+		log.Print(err)
 		http.Error(w, ErrorMessage, http.StatusInternalServerError)
 	}
 }
@@ -114,6 +117,7 @@ func Erase(w http.ResponseWriter, r *http.Request) {
 func pingRedis(client *redis.Client) error {
 	_, err := client.Ping(ctx).Result()
 	if err != nil {
+		log.Print(err)
 		return err
 	}
 	return nil
