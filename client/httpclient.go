@@ -16,7 +16,7 @@ func NewRcpRestClient(c Conf) *RcpRestClient {
 }
 
 func (c *RcpRestClient) DoPut(txt string) error {
-	req, err := http.NewRequest("PUT", c.Conf.Host + "/v", bytes.NewBufferString(txt))
+	req, err := http.NewRequest("PUT", c.Conf.Host, bytes.NewBufferString(txt))
 	if err != nil {
 		return err
 	}

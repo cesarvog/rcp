@@ -72,7 +72,8 @@ func main() {
 	if a == "-c" || a == "--copy" {
 		c, err := recoverConfig()
 		checkFailAndExit(err)
-		copyy(getText(), c)
+		err = copyy(getText(), c)
+		checkFailAndExit(err)
 	} else if a == "-p" || a == "--paste" {
 		c, err := recoverConfig()
 		checkFailAndExit(err)
