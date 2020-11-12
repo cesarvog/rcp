@@ -24,7 +24,7 @@ rcp -p
 
 ---
 
-<p align="center"><img src="/img/rcpsimple.gif?raw=true"/></p>
+<p align="center"><img src="imgs/rcpsimple.gif?raw=true"/></p>
 
 ---
 
@@ -44,7 +44,7 @@ rcp -p >> backup/package.json
 
 ---
 
-<p align="center"><img src="/img/rcpsimple.gif?raw=true"/></p>
+<p align="center"><img src="imgs/rcpsimple.gif?raw=true"/></p>
 
 ----
 
