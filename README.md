@@ -1,2 +1,2 @@
 # rcp
-Copy and paste bytes across internet
+Copy and paste **strings** across internet
