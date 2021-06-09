@@ -6,32 +6,19 @@ import (
 	"strings"
 	"errors"
 	"time"
-	"io"
 	"io/ioutil"
 	"os"
 
 	"github.com/gorilla/mux"
-	"context"
-	"github.com/go-redis/redis/v8"
 )
 
 const (
 	ErrorMessage = "Something is wrong :("
+	TmpDir = "tmp/"
+	FilePrefix = "f_"
 )
 
-var rclient *redis.Client
-var ctx = context.Background()
-
-
 func main() {
-	//redis
-	client, err := rclientNew()
-	rclient = client;
-	if err != nil {
-		panic(err)
-	}
-	log.Println("Redis started")
-
 	//service
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/v", Copy).Methods(http.MethodPut)
@@ -39,17 +26,12 @@ func main() {
 	router.HandleFunc("/v", Erase).Methods(http.MethodDelete)
 	log.Println("Service started")
 
+	go PurgeRoutine()
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router))
 }
 
-func rclientNew() (*redis.Client, error) {
-	url := os.Getenv("REDIS_URL")
-	opt, _ := redis.ParseURL(url)
-	rdb := redis.NewClient(opt)
-
-	err := pingRedis(rdb)
-
-	return rdb, err
+func filename(id string) string {
+	return TmpDir + FilePrefix + id
 }
 
 func getAuth(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -64,6 +46,7 @@ func getAuth(w http.ResponseWriter, r *http.Request) (string, error) {
 }
 
 func Copy(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	auth, err := getAuth(w, r)
 	if err != nil {
 		return
@@ -74,51 +57,87 @@ func Copy(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrorMessage, http.StatusInternalServerError)
 		return
 	}
-	defer r.Body.Close()
+	err = ioutil.WriteFile(filename(auth), content, 0644)
 
-	err = rclient.Set(ctx, auth, content, time.Hour).Err()
 	if err != nil {
-		log.Print(err)
+		log.Println(err)
 		http.Error(w, ErrorMessage, http.StatusInternalServerError)
 	}
 }
 
 
 func Paste(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	auth, err := getAuth(w, r)
 	if err != nil {
 		return
 	}
 
-	val, err := rclient.Get(ctx, auth).Result()
+	content, err := ioutil.ReadFile(filename(auth))
 	if err != nil {
-		log.Print(err)
+		log.Println(err)
 		http.Error(w, ErrorMessage, http.StatusNotFound)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	io.WriteString(w, val)
+	w.Write(content)
 }
 
 func Erase(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
 	auth, err := getAuth(w, r)
 	if err != nil {
 		return
 	}
+	
+	err = os.Remove(filename(auth))
 
-	err = rclient.Set(ctx, auth, "", time.Second).Err()
 	if err != nil {
-		log.Print(err)
+		log.Println(err)
 		http.Error(w, ErrorMessage, http.StatusInternalServerError)
 	}
 }
 
-func pingRedis(client *redis.Client) error {
-	_, err := client.Ping(ctx).Result()
-	if err != nil {
-		log.Print(err)
-		return err
+func MustDeleteFile(info os.FileInfo) bool {
+	if info.IsDir() {
+		return false
 	}
-	return nil
+
+	if time.Now().Sub(info.ModTime()) < time.Hour {
+		return false
+	}
+
+	if !strings.HasPrefix(info.Name(), FilePrefix) {
+		return false
+	}
+
+	return true
 }
+
+func PurgeRoutine() {
+	for {
+		time.Sleep(time.Hour)
+
+		files, err := ioutil.ReadDir(TmpDir)
+		if err != nil {
+			continue
+		}
+
+		for _, f := range files {
+			if MustDeleteFile(f) {
+				DeleteFile(f.Name())
+			}
+		}
+	}
+}
+
+func DeleteFile(f string) {
+	err := os.Remove(TmpDir + f)	
+	if err != nil {
+		log.Println("Erro deleting file", err.Error())
+	}
+}
+
+
