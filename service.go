@@ -24,7 +24,7 @@ func main() {
 	router.HandleFunc("/v", Copy).Methods(http.MethodPut)
 	router.HandleFunc("/v", Paste).Methods(http.MethodGet)
 	router.HandleFunc("/v", Erase).Methods(http.MethodDelete)
-	log.Println("Service started")
+	log.Println("Service started in port " + os.Getenv("PORT"))
 
 	go PurgeRoutine()
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router))
