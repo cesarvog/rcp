@@ -8,6 +8,8 @@ import (
 	"time"
 	"io/ioutil"
 	"os"
+	"crypto/md5"
+	"encoding/base64"
 
 	"github.com/gorilla/mux"
 )
@@ -18,6 +20,8 @@ const (
 	FilePrefix = "f_"
 )
 
+var encoder *base64.Encoding
+
 func main() {
 	//service
 	router := mux.NewRouter().StrictSlash(true)
@@ -26,12 +30,16 @@ func main() {
 	router.HandleFunc("/v", Erase).Methods(http.MethodDelete)
 	log.Println("Service started in port " + os.Getenv("PORT"))
 
+	encoder = base64.URLEncoding 
 	go PurgeRoutine()
+
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), router))
 }
 
 func filename(id string) string {
-	return TmpDir + FilePrefix + id
+	bb := md5.Sum([]byte(id))
+
+	return TmpDir + FilePrefix + encoder.EncodeToString(bb[:])
 }
 
 func getAuth(w http.ResponseWriter, r *http.Request) (string, error) {
